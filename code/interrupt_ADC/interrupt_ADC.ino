@@ -7,14 +7,6 @@ ATTENTION: SCLK canot go further than 20MHz, otherwise ADC output a very strange
 #include <SPI.h>
 #include <IntervalTimer.h>
 
-//------------ DAC PART ------------
-// Pin definitions
-const int DAC_MISO = 12; // 
-const int DAC_MOSI = 11;
-const int DAC_SCLK = 13; // 
-const int DAC_CS = 10 ;// 
-
-
 //------------ ADC PART ------------
 const int ADC_MISO = 39; // Dout
 const int ADC_MOSI = 26;
@@ -24,27 +16,19 @@ const int ADC_CS = 38 ;// CONVST (CS
 
 // Constants
 const int SCLK = 20000000;    // SCLK = 20 MHz
-const float samplingRate = 1000.0; // 392 kHz
+const float samplingRate = 12000.0; // 392 kHz
 
 // InterruptTimer
-IntervalTimer DACtimer; 
+// IntervalTimer DACtimer; 
 IntervalTimer ADCtimer;
 
 volatile bool toggle = false; // Toggle flag for square wave, use volatile for shared variables
 volatile bool dataReady = false; //for DAC and ADC syn
+volatile bool SEND = true;
 
 void setup() {
   Serial.begin(115200);
 
-
-  // Initialize SPI for DAC
-  // SPI.begin();  
-  // SPI.beginTransaction(SPISettings(SCLK, MSBFIRST, SPI_MODE0));
-  // pinMode(DAC_CS, OUTPUT);
-  // digitalWrite(DAC_CS, HIGH);  // Ensure DAC is not selected initially
-
-  // Initialize SPI for ADC
-  //NEED TO SPECIFY PIN (not sure about the standard SPI1 pins)
   SPI1.setMISO(ADC_MISO);
   SPI1.setMOSI(ADC_MOSI);
   SPI1.setSCK(ADC_SCLK);
@@ -64,7 +48,14 @@ void setup() {
 }
 
 void loop() {
- 
+  // if (SEND == true){
+  //   for (int i = 0; i<100; i++){
+  //     Serial.write((byte*)&i, 2); 
+  //   }
+  //   // SEND = false;
+  // }
+  
+  
 }
 
 // callback functions
@@ -89,8 +80,10 @@ void loop() {
 void ADC_callback(){
 
   digitalWrite(ADC_CS, LOW);
-  int ReadData = SPI1.transfer16(0x0000); //use this one to read data, may use transfer() to increase the speed
+  uint16_t ReadData = SPI1.transfer16(0x0000); //use this one to read data, may use transfer() to increase the speed
   digitalWrite(ADC_CS, HIGH);
-  Serial.println(ReadData);
+  Serial.write((byte*)&ReadData, sizeof(ReadData));
+
+  // Serial.println(ReadData);
 
 }

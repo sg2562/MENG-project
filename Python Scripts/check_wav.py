@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import scipy
 from scipy.io import wavfile
 
-filename = "8kHz_400Hz_10s.wav"
+filename = "./wavefile/1.0kHz_100Hz_square.wav"
 
 # check samples, total samples, 
 with wave.open(filename, 'rb') as wav_file:

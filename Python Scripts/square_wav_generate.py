@@ -3,9 +3,10 @@ from scipy.io import wavfile as wav
 
 def gen_sharp_square_wave():
     # Set sampling rate and frequency
-    sample_rate = 8000
-    frequency = 400
-    duration = 10
+    sample_rate = 18000
+    frequency = sample_rate//2
+    # frequency = 100
+    duration = 30
     
     # Compute total number of samples
     num_samples = int(sample_rate * duration)
@@ -25,7 +26,7 @@ def gen_sharp_square_wave():
     scaled_wave = (square_wave * max_int16).astype(np.int16)
 
     # Save as a WAV file
-    wav.write(f'{sample_rate/1000}kHz_{frequency}Hz_{duration}s.wav', sample_rate, scaled_wave)
+    wav.write(f'./wavefile/{sample_rate/1000}kHz_{frequency}Hz_square.wav', sample_rate, scaled_wave)
     print("Created successfully.")
 
 if __name__ == "__main__":

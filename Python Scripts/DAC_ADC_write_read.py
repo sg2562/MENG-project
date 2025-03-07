@@ -36,12 +36,14 @@ def run_dac():
 
                         # Read ADC
                         # time.sleep(0.001)
-                        highByte = ser_adc.read(1)
-                        lowByte = ser_adc.read(1)
-                        ADC_value = highByte[0] << 8 | lowByte[0]
 
-                        print(ADC_value)
-                        f.write(f"{ADC_value}\n")
+                        # PROBLEM!!! with reading
+                        # highByte = ser_adc.read(1)
+                        # lowByte = ser_adc.read(1)
+                        # ADC_value = highByte[0] << 8 | lowByte[0]
+
+                        # print(ADC_value)
+                        # f.write(f"{ADC_value}\n")
 
                     index += len(chunk)
                 else:

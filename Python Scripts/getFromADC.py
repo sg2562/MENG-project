@@ -19,17 +19,15 @@ num_samples = 0  # Counter for the number of samples
 # output_file.setframerate(sampling_rate)
 
 ser = serial.Serial("COM4")
+ser.reset_input_buffer()
+for i in range(10000):
+    # highByte = ser.read(1)
+    # lowByte = ser.read(1)
+    data = ser.read(2)
 
-for i in range(1000):
-    highByte = ser.read(1)
-    lowByte = ser.read(1)
+    # ADC_value = highByte[0]<<8 | lowByte[0]
+    ADC_value = struct.unpack('<H', data)[0]
 
-    ADC_value = highByte[0]<<8 | lowByte[0]
-
-    # print("when i = ", i, " ADC highbyte = ", highByte[0], "lowbyte = ", lowByte[0])
     print("ADC value = ", ADC_value)
-
-    # output_file.writeframes(struct.pack('<H', ADC_value)) #use H instead of h to accept 0-65535
-    # output_file.writeframes(np.array(ADC_value, dtype=np.uint16).tobytes())
 
 

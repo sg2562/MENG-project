@@ -23,7 +23,7 @@ volatile float periodMicros = 1e6 / samplingRate;
 
 void setup() {
 
-    Serial.begin(115200);  // USB CDC Serial, 12Mbit/s
+    Serial.begin(1152000);  // USB CDC Serial, 12Mbit/s
     availableSamples = 0;
     IS_IDLE = true;
     TIMER_START = false;
