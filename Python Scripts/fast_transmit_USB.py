@@ -1,87 +1,157 @@
-# import os
-# os.environ['PYUSB_DEBUG'] = 'debug'
-
+'''
+This file uses pyusb to do USB Bulk Transfer
+'''
 import usb.core
 import usb.util
-# import struct
-# import numpy as np
-# import soundfile as sf
-# import time
+from usb.backend import libusb1
 
+import wave
+import numpy as np
+import struct
+
+import serial
+
+# ser = serial.Serial("COM8")
+
+#  explicitly set backend
+backend = libusb1.get_backend(find_library=lambda x: "libusb-1.0.dll")
+
+
+
+# ====================== Device Config ====================
+# Since we use USB Serial, based on usb_desc.h, idVendor=0x16C0, idProduct=0x0483
 dev = usb.core.find(idVendor=0x16C0, idProduct=0x0483)
+# print(dev)
 if dev is None:
     raise ValueError('Device not found')
-else:
-    print("device found")
+print(dev)
+# dev.reset()
 
-dev.configurations()
-# Set the correct interface (Use Interface 2, not 0)
-INTERFACE_NUMBER = 0  # Teensy Bulk Transfer Interface
+# cfg = dev.get_active_configuration()
+# print(f"Current configuration: {cfg.bConfigurationValue}")
 
-# Claim Interface 2 (Bulk Transfer)
-usb.util.claim_interface(dev, INTERFACE_NUMBER)
+dev.set_configuration()
 
-EP_OUT = 0x3
-EP_IN = 0x84
+cfg = dev.get_active_configuration()
+intf = cfg[(1,0)]  # use the first interface for bulk endpoint
 
-# WAV_FILE = "square_44.1kHz.wav"
+print(dev)
 
-# # Load WAV File
-# data, sample_rate = sf.read(WAV_FILE, dtype="int16")
+ep_out = None
+ep_in = None
 
-# # Convert stereo to mono if needed
-# if len(data.shape) > 1:
-#     data = data.mean(axis=1).astype(np.int16)
+for ep in intf:
 
-# # Ensure proper format
-# samples = np.clip(data, -32768, 32767)  # Ensure 16-bit range
+    if usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_OUT:
+        if ep.bEndpointAddress == 0x03:  #
+            ep_out = ep
+        print("ep_out", ep.bEndpointAddress)
 
-# # Send Sampling Rate
-# def send_sampling_rate(rate):
-#     """Send the WAV file's sampling rate to Teensy via USB Bulk"""
-#     cmd_packet = struct.pack("<BI", 0xAA, rate) + b'\x00' * 59
-#     dev.write(EP_OUT, cmd_packet, timeout=100)
-#     print(f"Sent Sampling Rate: {rate} Hz")
-#     time.sleep(1)
+    # Check for Endpoint 4 (TX)
+    elif usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_IN:
+        if ep.bEndpointAddress == 0x84: 
+            ep_in = ep
 
-# # Wait for Ready Signal from Teensy
-# def wait_for_ready_signal():
-#     """Wait for Teensy to send 'R' indicating it's ready for more data"""
-#     while True:
-#         try:
-#             response = dev.read(EP_IN, 1, timeout=500)  # Read 1 byte
-#             if response[0] == ord('R'):
-#                 print("Teensy Ready - Sending Data...")
-#                 return
-#         except usb.core.USBError:
-#             pass  # Ignore timeout errors
+        print("ep_in", ep.bEndpointAddress)
 
-# # Send WAV Audio Data via USB Bulk Transfer
-# def send_audio_data(samples):
-#     """Send audio samples (16-bit) to Teensy using USB Bulk Transfer"""
-#     index = 0
-#     chunk_size = 128  # Sending 128 samples at a time (256 bytes per packet)
 
-#     while index < len(samples):
-#         wait_for_ready_signal()  # Wait for 'R' before sending more data
+'''
+ENDPOINT 0x3: Bulk OUT ===============================
+       bLength          :    0x7 (7 bytes)
+       bDescriptorType  :    0x5 Endpoint
+       bEndpointAddress :    0x3 OUT
+       bmAttributes     :    0x2 Bulk
+       wMaxPacketSize   :  0x200 (512 bytes)
+       bInterval        :    0x0
+      ENDPOINT 0x84: Bulk IN ===============================
+       bLength          :    0x7 (7 bytes)
+       bDescriptorType  :    0x5 Endpoint
+       bEndpointAddress :   0x84 IN
+       bmAttributes     :    0x2 Bulk
+       wMaxPacketSize   :  0x200 (512 bytes)
+       bInterval        :    0x0
 
-#         chunk = samples[index:index + chunk_size]
-#         packet = struct.pack("<B", 0xDD)  # DAC Data Packet Header
+'''
 
-#         for sample in chunk:
-#             packet += struct.pack("<H", sample)  # Convert 16-bit sample to bytes
+
+# ========================== Wav file read ===================
+WAV_FILE = "1.0kHz_500Hz_square.wav"
+
+
+with wave.open(WAV_FILE, "rb") as wav:
+    num_channels = wav.getnchannels()
+    sample_width = wav.getsampwidth()
+    frame_rate = wav.getframerate()
+    num_frames = wav.getnframes() # get number of samples
+
+    raw_data = wav.readframes(num_frames) # get all samples in bytes object, little-endian so low-byte then high-byte
+    # len(raw_data) = 2* num_frames 
+
+# convert it into big endian 
+# samples_int = [int.from_bytes(raw_data[i:i+2], byteorder="little", signed=False) #change to int (? unnecessary), length = numvber of samples
+        #    for i in range(0, len(raw_data), 2)]
+
+# samples_byte = samples_int.to_bytes(2, byteorder="large", signed=False)
+
+
+# =========== send sampling rate to control the start ==========
+bytes_rate = frame_rate.to_bytes(4, byteorder='little')
+dev.write(ep_out, bytes_rate)
+
+# =========== recieve ACK to send samples ==============
+PACKET_SIZE = 512
+send_index = 0
+
+# =========== pad bytes into multipe of 512 ===========
+# padding_size = (512 - (len(raw_data) % 512)) % 512  # Ensure no extra padding if already aligned
+# raw_data += b'\x00' * padding_size  # Pad with zeroes
+
+# we add extra byte at the end of raw data to make sure the raw data is not multiple of 512
+if len(raw_data) % 512 == 0:
+    raw_data += b'\x00'
+
+raw_data_length = len(raw_data)
+
+chunk_num = 5
+exit_while = False
+while not exit_while:
+    try:
+        # Poll for data with a short timeout
+        ReadInData = dev.read(ep_in, 1, timeout=10) # this function will return a
+        print(chr(ReadInData[0]))
+
+        if chr(ReadInData[0]) == 'S':
+            # send 5 chunk everytime it receive an S
+            for i in range(chunk_num):
+                if send_index < (len(raw_data) - PACKET_SIZE):
+                    chunk = raw_data[send_index:send_index+PACKET_SIZE]
+                    # try:
+                    #     dev.write(ep_out, chunk, timeout=100)  # Add a write timeout
+                    #     send_index += PACKET_SIZE
+                    #     print(f"Sent chunk {i+1} at index {send_index}")  # Debugging log
+                    #     break  # Exit retry loop if successful
+                    # except usb.core.USBTimeoutError:
+                    #     print("Write timeout on attempt {attempt+1}, retrying...")
         
-#         packet += b'\x00' * (512 - len(packet))  # Pad to 512 bytes
-#         dev.write(EP_OUT, packet, timeout=100)
+                    dev.write(ep_out, chunk)
+                    send_index += PACKET_SIZE
+                    print(i)
+                    print(send_index)
+                else:
+                    chunk = raw_data[send_index:] # get the rest of the value 
+                    dev.write(ep_out, chunk)
+                    send_index += PACKET_SIZE
+                    print(send_index)
+                    print('=================== EOF ====================')
+                    exit_while = True
+
+                    break
+
+           
+            
+
         
-#         index += chunk_size
-#         print(f"Sent {index}/{len(samples)} samples.")
+    except usb.core.USBTimeoutError:
+        print("No data available.")
 
-# # Main Function
-# def main():
-#     send_sampling_rate(sample_rate)
-#     send_audio_data(samples)
-#     print("Playback complete!")
-
-# if __name__ == "__main__":
-#     main()
+print("EOF")
