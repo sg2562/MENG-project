@@ -34,7 +34,6 @@ dev.set_configuration()
 
 cfg = dev.get_active_configuration()
 intf = cfg[(1,0)]  # use the first interface for bulk endpoint
-
 print(dev)
 
 ep_out = None
@@ -75,7 +74,7 @@ ENDPOINT 0x3: Bulk OUT ===============================
 
 
 # ========================== Wav file read ===================
-WAV_FILE = "1.0kHz_500Hz_square.wav"
+WAV_FILE = "./wavefile/1.0kHz_500Hz_square.wav"
 
 
 with wave.open(WAV_FILE, "rb") as wav:
@@ -123,29 +122,49 @@ while not exit_while:
         if chr(ReadInData[0]) == 'S':
             # send 5 chunk everytime it receive an S
             for i in range(chunk_num):
-                if send_index < (len(raw_data) - PACKET_SIZE):
+                if (send_index < (len(raw_data) - PACKET_SIZE)):
                     chunk = raw_data[send_index:send_index+PACKET_SIZE]
-                    # try:
-                    #     dev.write(ep_out, chunk, timeout=100)  # Add a write timeout
-                    #     send_index += PACKET_SIZE
-                    #     print(f"Sent chunk {i+1} at index {send_index}")  # Debugging log
-                    #     break  # Exit retry loop if successful
-                    # except usb.core.USBTimeoutError:
-                    #     print("Write timeout on attempt {attempt+1}, retrying...")
-        
-                    dev.write(ep_out, chunk)
-                    send_index += PACKET_SIZE
-                    print(i)
-                    print(send_index)
+                    try:
+                        dev.write(ep_out, chunk, timeout=100)
+                        send_index += PACKET_SIZE
+                        # Receive C to start next transmission
+                        while True:
+                            ReadInData = dev.read(ep_in, 1, timeout=10)
+                            if (chr(ReadInData == 'C')):
+                                break
+                    except usb.core.USBTimeoutError:
+                        print("Waiting for Teensy finish receiving handshake")
                 else:
-                    chunk = raw_data[send_index:] # get the rest of the value 
+                    chunk = raw_data[send_index:] # get the rest of the value, should be less than 512, no need to handshake
                     dev.write(ep_out, chunk)
                     send_index += PACKET_SIZE
                     print(send_index)
-                    print('=================== EOF ====================')
-                    exit_while = True
-
                     break
+                
+
+                # if (send_index < (len(raw_data) - PACKET_SIZE)):
+                #     chunk = raw_data[send_index:send_index+PACKET_SIZE]
+                #     # try:
+                #     #     dev.write(ep_out, chunk, timeout=100)  # Add a write timeout
+                #     #     send_index += PACKET_SIZE
+                #     #     print(f"Sent chunk {i+1} at index {send_index}")  # Debugging log
+                #     #     break  # Exit retry loop if successful
+                #     # except usb.core.USBTimeoutError:
+                #     #     print("Write timeout on attempt {attempt+1}, retrying...")
+        
+                #     dev.write(ep_out, chunk)
+                #     send_index += PACKET_SIZE
+                #     print(i)
+                #     print(send_index)
+                # else:
+                #     chunk = raw_data[send_index:] # get the rest of the value 
+                #     dev.write(ep_out, chunk)
+                #     send_index += PACKET_SIZE
+                #     print(send_index)
+                #     print('=================== EOF ====================')
+                #     exit_while = True
+
+                #     break
 
            
             

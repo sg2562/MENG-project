@@ -2,8 +2,8 @@ import serial
 import wave
 
 SERIAL_PORT = "COM5"
-BAUD_RATE = 4000000  # Irrelevant for USB Serial, kept for reference
-WAV_FILE = "./wavefile/18.0kHz_9000Hz_square.wav"
+BAUD_RATE = 1152000  # Irrelevant for USB Serial, kept for reference
+WAV_FILE = "./wavefile/12.0kHz_6000Hz_square.wav"
 # WAV_FILE = "square_10kHz_long.wav"
 
 ser = serial.Serial(SERIAL_PORT, baudrate=BAUD_RATE, timeout=0.1)  # Timeout prevents blocking
@@ -28,7 +28,7 @@ samples = [int.from_bytes(raw_data[i:i+2], byteorder="little", signed=False)
 chunk_size = 512
 index = 0
 while index < len(samples):
-    ser.reset_input_buffer()
+    # ser.reset_input_buffer()
     if ser.in_waiting > 0:
         ready_signal = ser.read(1)  # Check if Teensy is ready
         if ready_signal == b'R':
@@ -47,4 +47,4 @@ while index < len(samples):
             print(f"Ready signal not expected: {ready_signal.decode()}")
 
 ser.close()
-print(f"{frame_rate} file transmittion finished")
+print(f"{frame_rate} sampling rate file transmittion finished")

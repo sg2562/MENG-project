@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import scipy
 from scipy.io import wavfile
 
-filename = "./wavefile/1.0kHz_100Hz_square.wav"
+# filename = "./wavefile/1.0kHz_100Hz_square.wav"
+filename = "output.wav"
 
 # check samples, total samples, 
 with wave.open(filename, 'rb') as wav_file:
@@ -49,3 +50,4 @@ def plot_wavfile():
 
 if __name__ == "__main__":
     inside_wave_freq()
+    # plot_wavfile()

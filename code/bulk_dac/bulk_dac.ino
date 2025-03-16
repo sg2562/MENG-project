@@ -62,9 +62,6 @@ void setup() {
 
   pinMode(LED2, OUTPUT); // green
   digitalWrite(LED2, HIGH); //to show this program start
-
-
-
 }
 
 void loop() {
@@ -140,15 +137,23 @@ void loop() {
       usb_serial_write(&ACK, 1);
 
       while(nextWrite != HALF_MAX_BUFFER_SIZE){ 
-        coming_size = usb_serial_available();
+        coming_size = usb_serial_available(); // data available in the serial buffer
 
         if (coming_size == 512){ // normal sample data
 
           int count = usb_serial_read(&byte_buffer[nextWrite], coming_size);
           nextWrite = (nextWrite + count) % MAX_BUFFER_SIZE;;
           buffer_size += count;
+        
+        // PROBLEM: coming size > 512, all buffer data have not been sent out
+        // SOLUTION1: Wait until all the data is transfered, do a second handshake to PC telling it's okay to send the next packet
+        // SOLUTION2: Make Packet 510+2, last two contains the size of data. Wait until that "size of data" send then another?
 
-        }else if(coming_size > 0){
+        // SOLUTION1
+        uint8_t ACK2 = 'C';
+        usb_serial_write(&ACK2, 1);
+
+        }else if(coming_size > 0){ // deal with end packet
           int count = usb_serial_read(&byte_buffer[nextWrite], coming_size);
           nextWrite = (nextWrite + count) % MAX_BUFFER_SIZE;;
           buffer_size += count;

@@ -8,6 +8,7 @@
 
 //buffer
 #define BUFFER_SIZE 2048  // Adjust based on memory constraints
+const int SCLK = 20000000;    // SCLK = 20 MHz
 volatile uint16_t buffer[BUFFER_SIZE];  
 volatile uint32_t readIndex = 0;
 volatile uint32_t writeIndex = 0;
@@ -36,7 +37,7 @@ void setup() {
     digitalWrite(LED_RED, HIGH);
     digitalWrite(chipSelectPin, HIGH);
     SPI.begin();
-    SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
+    SPI.beginTransaction(SPISettings(SCLK, MSBFIRST, SPI_MODE0));
 
       // Calculate the period in microseconds
     // float periodMicros = 1e6 / samplingRate; // Convert sampling rate to period (µs)
