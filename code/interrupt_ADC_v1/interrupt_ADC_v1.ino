@@ -16,7 +16,7 @@ const int ADC_CS = 38 ;// CONVST (CS
 
 // Constants
 const int SCLK = 20000000;    // SCLK = 20 MHz
-const float samplingRate = 12000.0; // 392 kHz
+const float samplingRate = 8000.0; // 392 kHz
 
 // InterruptTimer
 // IntervalTimer DACtimer; 
@@ -82,8 +82,8 @@ void ADC_callback(){
   digitalWrite(ADC_CS, LOW);
   uint16_t ReadData = SPI1.transfer16(0x0000); //use this one to read data, may use transfer() to increase the speed
   digitalWrite(ADC_CS, HIGH);
-  Serial.write((byte*)&ReadData, sizeof(ReadData));
+  // Serial.write((byte*)&ReadData, sizeof(ReadData));
 
-  // Serial.println(ReadData);
+  Serial.println(ReadData);
 
 }

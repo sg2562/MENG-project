@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.io import wavfile as wav
+import matplotlib.pyplot as plt
 
 def gen_sharp_square_wave():
     # Set sampling rate and frequency
@@ -29,5 +30,34 @@ def gen_sharp_square_wave():
     wav.write(f'./wavefile/{sample_rate/1000}kHz_{frequency}Hz_square.wav', sample_rate, scaled_wave)
     print("Created successfully.")
 
+def gen_sine_wave():
+    # Set sampling rate and frequency
+    sample_rate = 8000
+    frequency = 100
+    duration = 30
+
+    # Compute total number of samples
+    num_samples = int(sample_rate * duration)
+
+    # Generate time values
+    t = np.linspace(0, duration, num_samples, endpoint=False)
+
+    # Generate sine wave
+    sine_wave = np.sin(2 * np.pi * frequency * t)
+
+    # Scale to 16-bit PCM format
+    max_int16 = np.iinfo(np.int16).max
+    scaled_wave = (sine_wave * max_int16).astype(np.int16)
+
+    # Ensure the output directory exists
+    output_dir = './wavefile/'
+    # os.makedirs(output_dir, exist_ok=True)
+
+    # Save as a WAV file
+    filename = f'{output_dir}{sample_rate/1000}kHz_{frequency}Hz_sine.wav'
+    wav.write(filename, sample_rate, scaled_wave)
+    print(f"Created successfully: {filename}")
+
 if __name__ == "__main__":
-    gen_sharp_square_wave()
+    # gen_sharp_square_wave()
+    gen_sine_wave()

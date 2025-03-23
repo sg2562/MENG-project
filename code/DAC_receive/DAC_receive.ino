@@ -8,6 +8,7 @@
 
 //buffer
 #define BUFFER_SIZE 2048  // Adjust based on memory constraints
+#define HWSERIAL Serial7
 const int SCLK = 20000000;    // SCLK = 20 MHz
 volatile uint16_t buffer[BUFFER_SIZE];  
 volatile uint32_t readIndex = 0;
@@ -25,6 +26,7 @@ volatile float periodMicros = 1e6 / samplingRate;
 void setup() {
 
     Serial.begin(1152000);  // USB CDC Serial, 12Mbit/s
+    HWSERIAL.begin(115200);
     availableSamples = 0;
     IS_IDLE = true;
     TIMER_START = false;

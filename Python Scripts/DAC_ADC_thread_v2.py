@@ -35,8 +35,8 @@ def run_dac():
         print(f"Sent sampling rate: {frame_rate} Hz")
 
         # Convert samples to little-endian 16-bit
-        samples = [int.from_bytes(raw_data[i:i+2], byteorder="little", signed=False)
-                for i in range(0, len(raw_data), 2)]
+        samples = [int.from_bytes(raw_data[i:i+2], byteorder="little", signed=True) + 32768
+           for i in range(0, len(raw_data), 2)]
 
         # Send samples with handshaking
         chunk_size = 128
@@ -79,34 +79,34 @@ def run_adc():
 
     # Create WAV file for ADC output
     output_filename = "output_v2.wav"
-    with wave.open(output_filename, 'wb') as output_file:
-        output_file.setnchannels(1)  # Mono audio
-        output_file.setsampwidth(2)  # 16-bit samples (2 bytes per sample)
-        output_file.setframerate(sampling_rate)
+    # with wave.open(output_filename, 'wb') as output_file:
+    #     output_file.setnchannels(1)  # Mono audio
+    #     output_file.setsampwidth(2)  # 16-bit samples (2 bytes per sample)
+    #     output_file.setframerate(sampling_rate)
 
-        i = 0
-        recorded_samples = []
+    i = 0
+    # recorded_samples = []
 
-        while True:
-            if ser_adc.in_waiting >= 2:  
-                data = ser_adc.read(2)
-                ADC_value = struct.unpack('<H', data)[0]
-                print(ADC_value)  
+    while True:
+        if ser_adc.in_waiting >= 2:  
+            data = ser_adc.read(2)
+            ADC_value = struct.unpack('<H', data)[0]
+            print(ADC_value)  
 
-                # Convert to signed 16-bit format (for WAV compatibility)
-                signed_value = ADC_value - 32768  # Convert from 0-65535 to -32768 to 32767
+            # # Convert to signed 16-bit format (for WAV compatibility)
+            # signed_value = ADC_value - 32768  # Convert from 0-65535 to -32768 to 32767
 
-                # Store the sample
-                recorded_samples.append(signed_value)
-                i += 1
-                if i == 360000:
-                    break
+            # # Store the sample
+            # recorded_samples.append(signed_value)
+            i += 1
+            if i == 360000:
+                break
 
         # Write all recorded samples to the WAV file
-        output_file.writeframes(np.array(recorded_samples, dtype=np.int16).tobytes())
+        # output_file.writeframes(np.array(recorded_samples, dtype=np.int16).tobytes())
 
     ser_adc.close()
-    print("ADC recording completed. Saved as output.wav.")
+    print("ADC recording completed. Saved as output_v2.wav.")
 
 # Create ADC & DAC threads
 thread_adc = threading.Thread(target=run_adc)
@@ -114,8 +114,8 @@ thread_dac = threading.Thread(target=run_dac)
 
 # Start threads
 thread_adc.start()
-thread_dac.start()
+# thread_dac.start()
 
 # Wait for completion
-thread_dac.join()
+# thread_dac.join()
 thread_adc.join()

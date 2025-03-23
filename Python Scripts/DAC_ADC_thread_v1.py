@@ -4,11 +4,11 @@ import wave
 import numpy as np
 import struct
 import time
+BAUD_RATE = 1152000  
 
 def run_dac():
-    SERIAL_PORT = "COM5"
-    BAUD_RATE = 1152000  
-    WAV_FILE = "./wavefile/12.0kHz_6000Hz_square.wav"
+    SERIAL_PORT = "COM3"
+    WAV_FILE = "./wavefile/8.0kHz_100Hz_sine.wav"
     # WAV_FILE = "square_10kHz_long.wav"
 
     ser = serial.Serial(SERIAL_PORT, baudrate=BAUD_RATE, timeout=0.1)  # Timeout prevents blocking
@@ -27,11 +27,18 @@ def run_dac():
     ser.write(command.encode())  # Send to Arduino
     print(f"Sent sampling rate: {frame_rate} Hz")
 
-    samples = [int.from_bytes(raw_data[i:i+2], byteorder="little", signed=False)
-            for i in range(0, len(raw_data), 2)]
+    # wavfile are signed!!
+    samples = [int.from_bytes(raw_data[i:i+2], byteorder="little", signed=True) + 32768 # 0-65535
+           for i in range(0, len(raw_data), 2)]
+    
+
+    # shifting because DAC is outputing from -40 mV to 4.92V, where adc can only record non-negative value
+    # shifted_samples = [(sample + 32768) // 2 for sample in samples]  # Scale to 16384 - 49151
+    # shifted_samples = [(sample + 32768) // 2 for sample in samples]
+    # samples = shifted_samples
 
     # Send samples with handshaking
-    chunk_size = 128
+    chunk_size = 256
     index = 0
     while index < len(samples):
         # ser.reset_input_buffer()
@@ -47,8 +54,8 @@ def run_dac():
     ser.close()
 
 def run_adc():
-    ser_adc = serial.Serial("COM4")
-    sampling_rate = 12000
+    ser_adc = serial.Serial("COM4", baudrate=BAUD_RATE, timeout=0.1)
+    sampling_rate = 8000
     output_filename = "output.wav"
     with wave.open(output_filename, 'wb') as output_file:
         output_file.setnchannels(1)  # Mono audio
@@ -58,17 +65,19 @@ def run_adc():
         i = 0
         recorded_samples = []
 
-        for i in range(360000):
-            # highByte = ser.read(1)
-            # lowByte = ser.read(1)
-            # ADC_value = highByte[0]<<8 | lowByte[0]
 
+        for i in range(360000):
             data = ser_adc.read(2)
             ADC_value = struct.unpack('<H', data)[0]
             # print(f"when i = {i}, {ADC_value}")
             signed_value = ADC_value - 32768
-
+            # restored_value = np.clip((ADC_value * 2) - 65536, -32768, 32767)
+            # restored_value = (ADC_value - 32768) * 2
+            # signed_value = restored_value - 32768
             recorded_samples.append(signed_value)
+            # recorded_samples.append(np.int16(restored_value))
+
+            # recorded_samples.append(signed_value)
         output_file.writeframes(np.array(recorded_samples, dtype=np.int16).tobytes())
         ser_adc.close()
         print("ADC recording completed. Saved as output.wav.")

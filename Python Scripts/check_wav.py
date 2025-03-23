@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import scipy
 from scipy.io import wavfile
 
-# filename = "./wavefile/1.0kHz_100Hz_square.wav"
+# filename = "./wavefile/8.0kHz_100Hz_sine.wav"
 filename = "output.wav"
 
 # check samples, total samples, 
@@ -43,11 +43,11 @@ def plot_wavfile():
     plt.xlabel("Time (seconds)")
     plt.ylabel("Amplitude")
     plt.title(f"Waveform (Sampling Rate: {Fs} Hz)")
-    plt.xlim((0,0.2))
+    plt.xlim((0,31))
     plt.legend()
     plt.grid()
     plt.show()
 
 if __name__ == "__main__":
-    inside_wave_freq()
-    # plot_wavfile()
+    # inside_wave_freq()
+    plot_wavfile()

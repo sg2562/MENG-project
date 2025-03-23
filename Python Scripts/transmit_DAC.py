@@ -1,9 +1,9 @@
 import serial
 import wave
 
-SERIAL_PORT = "COM5"
+SERIAL_PORT = "COM3"
 BAUD_RATE = 1152000  # Irrelevant for USB Serial, kept for reference
-WAV_FILE = "./wavefile/12.0kHz_6000Hz_square.wav"
+WAV_FILE = "./wavefile/8.0kHz_100Hz_sine.wav"
 # WAV_FILE = "square_10kHz_long.wav"
 
 ser = serial.Serial(SERIAL_PORT, baudrate=BAUD_RATE, timeout=0.1)  # Timeout prevents blocking

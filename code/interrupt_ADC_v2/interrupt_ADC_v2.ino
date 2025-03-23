@@ -16,10 +16,13 @@ const int ADC_MISO = 39;  // Dout (MISO)
 const int ADC_MOSI = 26;  // MOSI
 const int ADC_SCLK = 27;  // CLK
 const int ADC_CS   = 38;  // CONVST (CS)
-const int LED_RED  = 2;   // Status LED
+const int LED_2  = 2;   // Status LED
+const int LED_3  = 3;
 
 // Constants
 #define BUFFER_SIZE 2048
+#define HWSERIAL Serial7
+
 const int SCLK = 20000000;  // SCLK = 20 MHz
 
 // Buffers and State Variables
@@ -37,7 +40,9 @@ IntervalTimer ADCtimer;
 
 void setup() {
     Serial.begin(115200);  // USB Serial for PC communication
-    pinMode(LED_RED, OUTPUT);
+    HWSERIAL.begin(115200);
+    pinMode(LED_2, OUTPUT);
+    pinMode(LED_3, OUTPUT);
 
     // SPI Configuration
     SPI1.setMISO(ADC_MISO);
@@ -48,6 +53,7 @@ void setup() {
 
     pinMode(ADC_CS, OUTPUT);
     digitalWrite(ADC_CS, HIGH);  // Ensure ADC is deselected initially
+    digitalWrite(LED_2, HIGH);
 }
 
 void loop() {
@@ -61,9 +67,11 @@ void loop() {
         if (Serial.available()) {
             String input = Serial.readStringUntil('\n');
             samplingRate = input.toFloat();
+            HWSERIAL.println(samplingRate);
 
             if (samplingRate <= 392000.0) {
-                digitalWrite(LED_RED, HIGH);
+                digitalWrite(LED_2, LOW);
+                digitalWrite(LED_3, HIGH);
                 periodMicros = 1e6 / samplingRate;
                 IS_IDLE = false;
             }
