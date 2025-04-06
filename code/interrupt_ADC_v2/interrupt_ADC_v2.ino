@@ -21,7 +21,7 @@ const int LED_3  = 3;
 
 // Constants
 #define BUFFER_SIZE 2048
-#define HWSERIAL Serial7
+#define HWSERIAL Serial1
 
 const int SCLK = 20000000;  // SCLK = 20 MHz
 

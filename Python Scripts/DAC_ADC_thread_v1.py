@@ -7,8 +7,8 @@ import time
 BAUD_RATE = 1152000  
 
 def run_dac():
-    SERIAL_PORT = "COM3"
-    WAV_FILE = "./wavefile/8.0kHz_100Hz_sine.wav"
+    SERIAL_PORT = "COM8"
+    WAV_FILE = "./wavefile/12.0kHz_1000Hz_sine.wav"
     # WAV_FILE = "square_10kHz_long.wav"
 
     ser = serial.Serial(SERIAL_PORT, baudrate=BAUD_RATE, timeout=0.1)  # Timeout prevents blocking
@@ -54,9 +54,9 @@ def run_dac():
     ser.close()
 
 def run_adc():
-    ser_adc = serial.Serial("COM4", baudrate=BAUD_RATE, timeout=0.1)
-    sampling_rate = 8000
-    output_filename = "output.wav"
+    ser_adc = serial.Serial("COM3", baudrate=BAUD_RATE, timeout=0.1)
+    sampling_rate = 12000
+    output_filename = "output_12k_1000.wav"
     with wave.open(output_filename, 'wb') as output_file:
         output_file.setnchannels(1)  # Mono audio
         output_file.setsampwidth(2)  # 16-bit samples (2 bytes per sample)
@@ -80,7 +80,7 @@ def run_adc():
             # recorded_samples.append(signed_value)
         output_file.writeframes(np.array(recorded_samples, dtype=np.int16).tobytes())
         ser_adc.close()
-        print("ADC recording completed. Saved as output.wav.")
+        print(f"ADC recording completed. Saved as {output_filename}")
 
 thread_dac = threading.Thread(target=run_dac)
 thread_adc = threading.Thread(target=run_adc)

@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import scipy
 from scipy.io import wavfile
 
-# filename = "./wavefile/8.0kHz_100Hz_sine.wav"
-filename = "output.wav"
+# filename = "./wavefile/12.0kHz_1000Hz_sine.wav"
+filename = "output_12k_1000.wav"
 
 # check samples, total samples, 
 with wave.open(filename, 'rb') as wav_file:
