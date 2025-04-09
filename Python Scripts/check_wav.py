@@ -5,9 +5,10 @@ import scipy
 from scipy.io import wavfile
 
 # filename = "./wavefile/12.0kHz_1000Hz_sine.wav"
-filename = "output_12k_1000.wav"
+# filename = "output_12k_1000.wav"
+filename = "output_v2.wav"
 
-# check samples, total samples, 
+# check samples, total samples
 with wave.open(filename, 'rb') as wav_file:
     sample_rate = wav_file.getframerate()
     num_frames = wav_file.getnframes()
@@ -39,7 +40,7 @@ def plot_wavfile():
     time = np.arange(len(Y)) / Fs
 
     plt.figure(figsize=(10, 4))
-    plt.plot(time, Y, label="Audio Signal")
+    plt.scatter(time, Y, label="Audio Signal")
     plt.xlabel("Time (seconds)")
     plt.ylabel("Amplitude")
     plt.title(f"Waveform (Sampling Rate: {Fs} Hz)")

@@ -56,7 +56,7 @@ def run_dac():
 def run_adc():
     ser_adc = serial.Serial("COM3", baudrate=BAUD_RATE, timeout=0.1)
     sampling_rate = 12000
-    output_filename = "output_12k_1000.wav"
+    output_filename = "output_12k_1000_test.wav"
     with wave.open(output_filename, 'wb') as output_file:
         output_file.setnchannels(1)  # Mono audio
         output_file.setsampwidth(2)  # 16-bit samples (2 bytes per sample)

@@ -21,7 +21,7 @@ const int LED_3  = 3;
 
 // Constants
 #define BUFFER_SIZE 2048
-#define HWSERIAL Serial1
+#define HWSERIAL Serial7
 
 const int SCLK = 20000000;  // SCLK = 20 MHz
 
@@ -67,21 +67,27 @@ void loop() {
         if (Serial.available()) {
             String input = Serial.readStringUntil('\n');
             samplingRate = input.toFloat();
+            HWSERIAL.print("Sampling Rate Received: ");
             HWSERIAL.println(samplingRate);
 
             if (samplingRate <= 392000.0) {
                 digitalWrite(LED_2, LOW);
                 digitalWrite(LED_3, HIGH);
                 periodMicros = 1e6 / samplingRate;
-                IS_IDLE = false;
+
+                // Send "Ready" Signal ('R') to PC (Only Once)
+                Serial.write('R');
+                Serial.flush();
+
+                while (!Serial.available());
+                char start_signal = Serial.read();
+                if (start_signal == 'S') {
+                    IS_IDLE = false;
+                }
             }
         }
     } 
     else { 
-        // Send "Ready" Signal ('R') to PC (Only Once)
-        Serial.write('R');
-        Serial.flush();
-
         // Start ADC Timer if not started
         if (!TIMER_START) {
             ADCtimer.begin(ADC_callback, periodMicros);
